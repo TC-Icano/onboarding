@@ -43,7 +43,9 @@ namespace ToDo
                         break;
                     default:
                         // If selectedOption is 4 then exit from system otherwise non valid option
-                        string message = selectedOption == 4 ? "Exit option selected..." : "Must enter a valid option";
+                        string message = selectedOption == 4 ?
+                            Resources.ToDoResources.Menu_Caption_FinishApp :
+                            Resources.ToDoResources.Menu_Error_InvalidOption;
 
                         Console.WriteLine(message);
                         break;
@@ -61,11 +63,11 @@ namespace ToDo
         private static int DisplayMenuOptions()
         {
             Console.WriteLine(SectionLine);
-            Console.WriteLine("Enter the option to perform: ");
-            Console.WriteLine("1. New task");
-            Console.WriteLine("2. Remove task");
-            Console.WriteLine("3. Pending tasks");
-            Console.WriteLine("4. Exit");
+            Console.WriteLine(Resources.ToDoResources.Menu_Caption_Title);
+            Console.WriteLine(Resources.ToDoResources.Menu_Option_NewTask);
+            Console.WriteLine(Resources.ToDoResources.Menu_Option_RemoveTask);
+            Console.WriteLine(Resources.ToDoResources.Menu_Option_PendingTasks);
+            Console.WriteLine(Resources.ToDoResources.Menu_Option_Exit);
 
             // Get typed value and try convert it to int
             bool isValidOption = Int32.TryParse(Console.ReadLine(), out int selectedOption);
@@ -81,22 +83,22 @@ namespace ToDo
         {
             try
             {
-                Console.WriteLine("Enter the name of the task: ");
+                Console.WriteLine(Resources.ToDoResources.NewTask_Caption_Title);
 
                 string? taskName = Console.ReadLine();
                 if (string.IsNullOrEmpty(taskName))
                 {
-                    Console.WriteLine("Must enter a task name");
+                    Console.WriteLine(Resources.ToDoResources.NewTask_Error_InvalidTask);
                     return;
                 }
 
                 Tasks.Add(taskName);
 
-                Console.WriteLine("Task registered successfully");
+                Console.WriteLine(Resources.ToDoResources.NewTask_Caption_Success);
             }
             catch (Exception)
             {
-                Console.WriteLine("An unexpected error occurred while registering new task. Try again or contact support");
+                Console.WriteLine(Resources.ToDoResources.NewTask_Error_Exception);
             }
         }
 
@@ -109,16 +111,16 @@ namespace ToDo
             {
                 if (Tasks?.Count <= 0)
                 {
-                    Console.WriteLine("There are not tasks to be removed");
+                    Console.WriteLine(Resources.ToDoResources.RemoveTask_Error_NotTasks);
                     return;
                 }
 
-                Console.WriteLine("Enter the number of the task to remove: ");
+                Console.WriteLine(Resources.ToDoResources.RemoveTask_Caption_Title);
 
                 // Display existing taks
                 for (int index = 0; index < Tasks.Count; index ++)
                 {
-                    Console.WriteLine($"{index + 1}. {Tasks[index]}");
+                    Console.WriteLine(String.Format(Resources.ToDoResources.RemoveTask_Caption_IndexTask, index + 1, Tasks[index]));
                 }
 
                 Console.WriteLine(SectionLine);
@@ -127,27 +129,27 @@ namespace ToDo
                 bool isValidOption = Int32.TryParse(Console.ReadLine(), out int taskNumber);
                 if (!isValidOption)
                 {
-                    Console.WriteLine("Must enter a valid number");
+                    Console.WriteLine(Resources.ToDoResources.RemoveTask_Error_InvalidNumber);
                     return;
                 }
 
                 // Validate if typed number is not into Tasks options
                 if(taskNumber < 1 || taskNumber > Tasks.Count)
                 {
-                    Console.WriteLine($"Task number ({taskNumber}) does not exist");
+                    Console.WriteLine(String.Format(Resources.ToDoResources.RemoveTask_Error_TaskNotFound, taskNumber));
                     return;
                 }
 
                 // Set task index to be removed
                 int indexToRemove = taskNumber - 1;
-
+                string taskName = Tasks[indexToRemove];
                 Tasks.RemoveAt(indexToRemove);
 
-                Console.WriteLine($"Task {Tasks[indexToRemove]} deleted");
+                Console.WriteLine(String.Format(Resources.ToDoResources.RemoveTask_Caption_Success, taskName));
             }
             catch (Exception)
             {
-                Console.WriteLine("An unexpected error occurred wihle removing task. Try again or contact support");
+                Console.WriteLine(Resources.ToDoResources.RemoveTask_Error_Exception);
             }
         }
 
@@ -161,7 +163,7 @@ namespace ToDo
                 // Check if exists any tasks
                 if (!Tasks.Any())
                 {
-                    Console.WriteLine("There are no tasks to perform");
+                    Console.WriteLine(Resources.ToDoResources.PendingTasks_Error_NotTasks);
                     return;
                 }
 
@@ -170,14 +172,14 @@ namespace ToDo
                 // Display existing tasks
                 for (int index = 0; index < Tasks?.Count; index++)
                 {
-                    Console.WriteLine($"{index + 1}. {Tasks[index]}");
+                    Console.WriteLine(String.Format(Resources.ToDoResources.PendingTasks_Caption_IndexTask, index + 1, Tasks[index]));
                 }
 
                 Console.WriteLine(SectionLine);
             }
             catch (Exception)
             {
-                Console.WriteLine("An unexpected error occurred. Try again or contact support");
+                Console.WriteLine(Resources.ToDoResources.PendingTasks_Error_Exception);
             }
         }
 
