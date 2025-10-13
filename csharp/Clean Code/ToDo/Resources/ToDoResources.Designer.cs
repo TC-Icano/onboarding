@@ -153,9 +153,9 @@ namespace ToDo.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Must enter a task name.
         /// </summary>
-        internal static string NewTask_Error_InvalidTask {
+        internal static string NewTask_Error_InvalidTaskName {
             get {
-                return ResourceManager.GetString("NewTask_Error_InvalidTask", resourceCulture);
+                return ResourceManager.GetString("NewTask_Error_InvalidTaskName", resourceCulture);
             }
         }
         

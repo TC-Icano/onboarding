@@ -138,9 +138,6 @@
   <data name="NewTask_Error_Exception" xml:space="preserve">
     <value>An unexpected error occurred while registering new task. Try again or contact support</value>
   </data>
-  <data name="NewTask_Error_InvalidTask" xml:space="preserve">
-    <value>Must enter a task name</value>
-  </data>
   <data name="RemoveTask_Caption_Title" xml:space="preserve">
     <value>Enter the number of the task to remove:</value>
   </data>
@@ -179,5 +176,8 @@
   </data>
   <data name="Menu_Error_InvalidOption" xml:space="preserve">
     <value>Must enter a valid option</value>
+  </data>
+  <data name="NewTask_Error_InvalidTaskName" xml:space="preserve">
+    <value>Must enter a task name</value>
   </data>
 </root>

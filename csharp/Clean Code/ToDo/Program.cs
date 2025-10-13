@@ -41,13 +41,11 @@ namespace ToDo
                     case PendingTasksOption:
                         DisplayPendingTasksOption();
                         break;
+                    case ExitOption:
+                        DisplayFinishAppOption();
+                        break;
                     default:
-                        // If selectedOption is 4 then exit from system otherwise non valid option
-                        string message = selectedOption == ExitOption ?
-                            Resources.ToDoResources.Menu_Caption_FinishApp :
-                            Resources.ToDoResources.Menu_Error_InvalidOption;
-
-                        Console.WriteLine(message);
+                        Console.WriteLine(Resources.ToDoResources.Menu_Error_InvalidOption);
                         break;
                 }
 
@@ -85,10 +83,10 @@ namespace ToDo
             {
                 Console.WriteLine(Resources.ToDoResources.NewTask_Caption_Title);
 
-                string? taskName = Console.ReadLine();
+                string taskName = Console.ReadLine();
                 if (string.IsNullOrEmpty(taskName))
                 {
-                    Console.WriteLine(Resources.ToDoResources.NewTask_Error_InvalidTask);
+                    Console.WriteLine(Resources.ToDoResources.NewTask_Error_InvalidTaskName);
                     return;
                 }
 
@@ -109,7 +107,7 @@ namespace ToDo
         {
             try
             {
-                if (Tasks?.Count <= 0)
+                if (!Tasks.Any())
                 {
                     Console.WriteLine(Resources.ToDoResources.RemoveTask_Error_NotTasks);
                     return;
@@ -181,6 +179,14 @@ namespace ToDo
             {
                 Console.WriteLine(Resources.ToDoResources.PendingTasks_Error_Exception);
             }
+        }
+
+        /// <summary>
+        /// Works as exit option functionality
+        /// </summary>
+        private static void DisplayFinishAppOption()
+        {
+            Console.WriteLine(Resources.ToDoResources.Menu_Caption_FinishApp);
         }
 
         #endregion
