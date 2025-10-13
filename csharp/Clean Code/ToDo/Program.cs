@@ -32,18 +32,18 @@ namespace ToDo
 
                 switch (selectedOption)
                 {
-                    case 1:
+                    case NewTaskOption:
                         DisplayNewTaskOption();
                         break;
-                    case 2:
+                    case RemoveTaskOption:
                         DisplayRemoveTaskOption();
                         break;
-                    case 3:
+                    case PendingTasksOption:
                         DisplayPendingTasksOption();
                         break;
                     default:
                         // If selectedOption is 4 then exit from system otherwise non valid option
-                        string message = selectedOption == 4 ?
+                        string message = selectedOption == ExitOption ?
                             Resources.ToDoResources.Menu_Caption_FinishApp :
                             Resources.ToDoResources.Menu_Error_InvalidOption;
 
@@ -51,7 +51,7 @@ namespace ToDo
                         break;
                 }
 
-            } while (selectedOption != 4);
+            } while (selectedOption != ExitOption);
         }
 
         /// <summary>
@@ -194,6 +194,10 @@ namespace ToDo
         #region Private Members
 
         private const string SectionLine = "----------------------------------------";
+        private const int NewTaskOption = 1;
+        private const int RemoveTaskOption = 2;
+        private const int PendingTasksOption = 3;
+        private const int ExitOption = 4;
 
         #endregion
 
