@@ -2,10 +2,9 @@ namespace InterfaceSegregation
 {
     public interface IActivities
     {
-        void Plan();
-        void Comunicate();
-        void Design();
+        /// <summary>
+        /// Executes the development process for the current project or task.
+        /// </summary>
         void Develop();
-        void Test();
     }
 }
