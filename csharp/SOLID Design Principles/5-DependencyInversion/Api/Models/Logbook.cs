@@ -1,9 +1,8 @@
-using Api.Interface;
 using System.Text;
 
 namespace DependencyInversion
 {
-    public class Logbook : ILogbook
+    public class Logbook
     {
         public void Add(string description)
         {
