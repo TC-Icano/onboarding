@@ -1,110 +1,196 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ToDo
 {
     internal class Program
     {
-        public static List<string> TL { get; set; }
 
         static void Main(string[] args)
         {
-            TL = new List<string>();
-            int variable = 0;
+            Tasks = new List<string>();
+            
+            ApplicationStartup();
+        }
+
+        /// <summary>
+        /// Starts ToDo menu
+        /// </summary>
+        private static void ApplicationStartup()
+        {
+            int selectedOption;
+
             do
             {
-                variable = ShowMainMenu();
-                if (variable == 1)
+                selectedOption = DisplayMenuOptions();
+
+                switch (selectedOption)
                 {
-                    ShowMenuAdd();
+                    case NewTaskOption:
+                        AddNewTask();
+                        break;
+                    case RemoveTaskOption:
+                        RemoveTask();
+                        break;
+                    case PendingTasksOption:
+                        ShowPendingTasks();
+                        break;
+                    case ExitOption:
+                        FinishApp();
+                        break;
+                    default:
+                        Console.WriteLine(Resources.ToDoResources.Menu_Error_InvalidOption);
+                        break;
                 }
-                else if (variable == 2)
-                {
-                    ShowMenuDos();
-                }
-                else if (variable == 3)
-                {
-                    ShowMenuTres();
-                }
-            } while (variable != 4);
+
+            } while (selectedOption != ExitOption);
         }
+
         /// <summary>
-        /// Show the main menu 
+        /// Display available options for ToDo system
         /// </summary>
-        /// <returns>Returns option indicated by user</returns>
-        public static int ShowMainMenu()
+        /// <returns>
+        /// - return typed if it is number otherwise return 0
+        /// </returns>
+        private static int DisplayMenuOptions()
         {
-            Console.WriteLine("----------------------------------------");
-            Console.WriteLine("Enter the option to perform: ");
-            Console.WriteLine("1. New task");
-            Console.WriteLine("2. Remove task");
-            Console.WriteLine("3. Pending tasks");
-            Console.WriteLine("4. Exit");
+            Console.WriteLine(SectionLine);
+            Console.WriteLine(Resources.ToDoResources.Menu_Caption_Title);
+            Console.WriteLine(Resources.ToDoResources.Menu_Option_NewTask);
+            Console.WriteLine(Resources.ToDoResources.Menu_Option_RemoveTask);
+            Console.WriteLine(Resources.ToDoResources.Menu_Option_PendingTasks);
+            Console.WriteLine(Resources.ToDoResources.Menu_Option_Exit);
 
-            // Read line
-            string line = Console.ReadLine();
-            return Convert.ToInt32(line);
+            // Get typed value and try convert it to int
+            bool isValidOption = Int32.TryParse(Console.ReadLine(), out int selectedOption);
+
+            // If is valid option return selectedOption, otherwise return 0
+            return isValidOption ? selectedOption : 0;
         }
 
-        public static void ShowMenuDos()
-        {
-            try
-            {
-                Console.WriteLine("Enter the number of the task to remove: ");
-                // Show current taks
-                for (int i = 0; i < TL.Count; i++)
-                {
-                    Console.WriteLine((i + 1) + ". " + TL[i]);
-                }
-                Console.WriteLine("----------------------------------------");
-
-                string line = Console.ReadLine();
-                // Remove one position
-                int indexToRemove = Convert.ToInt32(line) - 1;
-                if (indexToRemove > -1)
-                {
-                    if (TL.Count > 0)
-                    {
-                        string task = TL[indexToRemove];
-                        TL.RemoveAt(indexToRemove);
-                        Console.WriteLine("Task " + task + " deleted");
-                    }
-                }
-            }
-            catch (Exception)
-            {
-            }
-        }
-
-        public static void ShowMenuAdd()
+        /// <summary>
+        /// Add new item into Task
+        /// </summary>
+        private static void AddNewTask()
         {
             try
             {
-                Console.WriteLine("Enter the name of the task: ");
-                string task = Console.ReadLine();
-                TL.Add(task);
-                Console.WriteLine("Task registered successfully");
+                Console.WriteLine(Resources.ToDoResources.NewTask_Caption_Title);
+
+                string? taskName = Console.ReadLine();
+                if (string.IsNullOrEmpty(taskName))
+                {
+                    Console.WriteLine(Resources.ToDoResources.NewTask_Error_InvalidTaskName);
+                    return;
+                }
+
+                Tasks.Add(taskName);
+
+                Console.WriteLine(Resources.ToDoResources.NewTask_Caption_Success);
             }
             catch (Exception)
             {
+                Console.WriteLine(Resources.ToDoResources.NewTask_Error_Exception);
             }
         }
 
-        public static void ShowMenuTres()
+        /// <summary>
+        /// Delete item from Task
+        /// </summary>
+        private static void RemoveTask()
         {
-            if (TL == null || TL.Count == 0)
+            try
             {
-                Console.WriteLine("There are no tasks to perform");
-            } 
-            else
-            {
-                Console.WriteLine("----------------------------------------");
-                for (int i = 0; i < TL.Count; i++)
+                if (!Tasks.Any())
                 {
-                    Console.WriteLine((i + 1) + ". " + TL[i]);
+                    Console.WriteLine(Resources.ToDoResources.RemoveTask_Error_NotTasks);
+                    return;
                 }
-                Console.WriteLine("----------------------------------------");
+
+                Console.WriteLine(Resources.ToDoResources.RemoveTask_Caption_Title);
+
+                // Display existing taks
+                for (int index = 0; index < Tasks.Count; index ++)
+                {
+                    Console.WriteLine(String.Format(Resources.ToDoResources.RemoveTask_Caption_IndexTask, index + 1, Tasks[index]));
+                }
+
+                Console.WriteLine(SectionLine);
+
+                // Validate if typed value is int
+                bool isValidOption = int.TryParse(Console.ReadLine(), out int taskNumber);
+                if (!isValidOption)
+                {
+                    Console.WriteLine(Resources.ToDoResources.RemoveTask_Error_InvalidNumber);
+                    return;
+                }
+
+                // Validate if typed number is not into Tasks options
+                if(taskNumber < 1 || taskNumber > Tasks.Count)
+                {
+                    Console.WriteLine(String.Format(Resources.ToDoResources.RemoveTask_Error_TaskNotFound, taskNumber));
+                    return;
+                }
+
+                // Set task index to be removed
+                int indexToRemove = taskNumber - 1;
+                string taskName = Tasks[indexToRemove];
+                Tasks.RemoveAt(indexToRemove);
+
+                Console.WriteLine(String.Format(Resources.ToDoResources.RemoveTask_Caption_Success, taskName));
+            }
+            catch (Exception)
+            {
+                Console.WriteLine(Resources.ToDoResources.RemoveTask_Error_Exception);
             }
         }
+
+        /// <summary>
+        /// Show available items from Task
+        /// </summary>
+        private static void ShowPendingTasks()
+        {
+            try
+            {
+                // Check if exists any tasks
+                if (!Tasks.Any())
+                {
+                    Console.WriteLine(Resources.ToDoResources.PendingTasks_Error_NotTasks);
+                    return;
+                }
+
+                Console.WriteLine(SectionLine);
+
+                // Display existing tasks
+                for (int index = 0; index < Tasks?.Count; index++)
+                {
+                    Console.WriteLine(String.Format(Resources.ToDoResources.PendingTasks_Caption_IndexTask, index + 1, Tasks[index]));
+                }
+
+                Console.WriteLine(SectionLine);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine(Resources.ToDoResources.PendingTasks_Error_Exception);
+            }
+        }
+
+        /// <summary>
+        /// Works as exit option functionality
+        /// </summary>
+        private static void FinishApp()
+        {
+            Console.WriteLine(Resources.ToDoResources.Menu_Caption_FinishApp);
+        }
+
+        public static List<string> Tasks { get; set; } = new();
+
+        private const string SectionLine = "----------------------------------------";
+        private const int NewTaskOption = 1;
+        private const int RemoveTaskOption = 2;
+        private const int PendingTasksOption = 3;
+        private const int ExitOption = 4;
+
     }
 }
