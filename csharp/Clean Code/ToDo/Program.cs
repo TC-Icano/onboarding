@@ -6,23 +6,18 @@ namespace ToDo
 {
     internal class Program
     {
-        #region Main
 
         static void Main(string[] args)
         {
             Tasks = new List<string>();
             
-            AplicationStartup();
+            ApplicationStartup();
         }
-
-        #endregion
-
-        #region Private Methods
 
         /// <summary>
         /// Starts ToDo menu
         /// </summary>
-        private static void AplicationStartup()
+        private static void ApplicationStartup()
         {
             int selectedOption;
 
@@ -33,16 +28,16 @@ namespace ToDo
                 switch (selectedOption)
                 {
                     case NewTaskOption:
-                        DisplayNewTaskOption();
+                        AddNewTask();
                         break;
                     case RemoveTaskOption:
-                        DisplayRemoveTaskOption();
+                        RemoveTask();
                         break;
                     case PendingTasksOption:
-                        DisplayPendingTasksOption();
+                        ShowPendingTasks();
                         break;
                     case ExitOption:
-                        DisplayFinishAppOption();
+                        FinishApp();
                         break;
                     default:
                         Console.WriteLine(Resources.ToDoResources.Menu_Error_InvalidOption);
@@ -77,13 +72,13 @@ namespace ToDo
         /// <summary>
         /// Add new item into Task
         /// </summary>
-        private static void DisplayNewTaskOption()
+        private static void AddNewTask()
         {
             try
             {
                 Console.WriteLine(Resources.ToDoResources.NewTask_Caption_Title);
 
-                string taskName = Console.ReadLine();
+                string? taskName = Console.ReadLine();
                 if (string.IsNullOrEmpty(taskName))
                 {
                     Console.WriteLine(Resources.ToDoResources.NewTask_Error_InvalidTaskName);
@@ -103,7 +98,7 @@ namespace ToDo
         /// <summary>
         /// Delete item from Task
         /// </summary>
-        private static void DisplayRemoveTaskOption()
+        private static void RemoveTask()
         {
             try
             {
@@ -124,7 +119,7 @@ namespace ToDo
                 Console.WriteLine(SectionLine);
 
                 // Validate if typed value is int
-                bool isValidOption = Int32.TryParse(Console.ReadLine(), out int taskNumber);
+                bool isValidOption = int.TryParse(Console.ReadLine(), out int taskNumber);
                 if (!isValidOption)
                 {
                     Console.WriteLine(Resources.ToDoResources.RemoveTask_Error_InvalidNumber);
@@ -154,7 +149,7 @@ namespace ToDo
         /// <summary>
         /// Show available items from Task
         /// </summary>
-        private static void DisplayPendingTasksOption()
+        private static void ShowPendingTasks()
         {
             try
             {
@@ -184,28 +179,18 @@ namespace ToDo
         /// <summary>
         /// Works as exit option functionality
         /// </summary>
-        private static void DisplayFinishAppOption()
+        private static void FinishApp()
         {
             Console.WriteLine(Resources.ToDoResources.Menu_Caption_FinishApp);
         }
 
-        #endregion
-
-        #region Public Properties
-
-        public static List<string> Tasks { get; set; }
-
-        #endregion
-
-        #region Private Members
+        public static List<string> Tasks { get; set; } = new();
 
         private const string SectionLine = "----------------------------------------";
         private const int NewTaskOption = 1;
         private const int RemoveTaskOption = 2;
         private const int PendingTasksOption = 3;
         private const int ExitOption = 4;
-
-        #endregion
 
     }
 }
