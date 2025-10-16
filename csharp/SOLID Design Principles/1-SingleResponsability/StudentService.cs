@@ -1,9 +1,5 @@
 ﻿using SingleResponsability;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace _1_SingleResponsability
 {
@@ -70,7 +66,7 @@ namespace _1_SingleResponsability
 
         #region Private Members
 
-        private StudentRepository _studentRepository;
+        private readonly StudentRepository _studentRepository;
 
         private readonly string _csvPathToSave = AppDomain.CurrentDomain.BaseDirectory;
 
