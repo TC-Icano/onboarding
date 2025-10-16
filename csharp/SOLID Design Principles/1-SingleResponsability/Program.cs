@@ -1,8 +1,10 @@
-﻿using SingleResponsability;
+﻿using _1_SingleResponsability;
 
-StudentRepository studentRepository = new();
-studentRepository.Export();
+Console.WriteLine("Calling StudentService...");
+
+StudentService studentService = new();
+studentService.ExportAllStudentsToCsv();
+
 Console.WriteLine("Process completed!");
-
 Console.WriteLine("Press any key to finish...");
 Console.ReadKey();
