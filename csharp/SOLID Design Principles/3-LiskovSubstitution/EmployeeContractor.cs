@@ -17,7 +17,9 @@ namespace Liskov
         /// of <c>HoursWorked</c> and <c>ExtraHours</c>.</returns>
         public override decimal CalculateSalary()
         {
-            return 40 * (HoursWorked + ExtraHours);
+            return HourlyRate * (HoursWorked + ExtraHours);
         }
+
+        private const int HourlyRate = 40;
     }
 }
