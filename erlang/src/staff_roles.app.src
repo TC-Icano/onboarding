@@ -1,0 +1,20 @@
+{application, staff_roles, [
+    {description, "An OTP application"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {mod, {staff_roles_app, []}},
+    {applications, [
+        kernel,
+        stdlib,
+        cowboy,
+        ranch
+    ]},
+    {env, []},
+    {modules, [
+        staff_roles_app,
+        hello_handler,
+        role_handler
+    ]},
+    {licenses, ["Apache-2.0"]},
+    {links, []}
+ ]}.
