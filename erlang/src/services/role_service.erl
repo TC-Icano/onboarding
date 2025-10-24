@@ -6,90 +6,59 @@
 %% Export functions
 -export([
     get_all_roles/0,
-    get_role_by_id/1,
+    get_role_by_mrn/1,
     create_role/1,
     update_role/2,
     delete_role/1
 ]).
 
-%% Get all roles (hardcoded for now)
+%% Get all roles from Redis repository
 get_all_roles() ->
-    %% Create sample role data
-    Data1 = #data{
-        first_name = <<"Adam">>,
-        last_name = <<"Everyman">>,
-        gender = <<"M">>,
-        mrn = <<"99991946">>,
-        organization = <<"GPXS87a6lEnkmzONMeR2qIVg">>
-    },
-    Role1 = #role{
-        event_type = <<"Arrival">>,
-        data = Data1
-    },
+    case role_repository:get_all_roles() of
+        {ok, Roles} ->
+            %% Convert roles to JSON and return
+            [json_utils:role_to_json(Role) || Role <- Roles];
+        {error, Reason} ->
+            %% Return empty list or handle error as needed
+            %% You might want to log this error
+            []
+    end.
 
-    Data2 = #data{
-        first_name = <<"Jane">>,
-        last_name = <<"Smith">>,
-        gender = <<"F">>,
-        mrn = <<"99991947">>,
-        organization = <<"GPXS87a6lEnkmzONMeR2qIVg">>
-    },
-    Role2 = #role{
-        event_type = <<"Departure">>,
-        data = Data2
-    },
-
-    Data3 = #data{
-        first_name = <<"Bob">>,
-        last_name = <<"Johnson">>,
-        gender = <<"M">>,
-        mrn = <<"99991948">>,
-        organization = <<"GPXS87a6lEnkmzONMeR2qIVg">>
-    },
-    Role3 = #role{
-        event_type = <<"Arrival">>,
-        data = Data3
-    },
-
-    %% Convert roles to JSON and return
-    Roles = [Role1, Role2, Role3],
-    [json_utils:role_to_json(Role) || Role <- Roles].
-
-%% Get role by id (hardcoded for now)
-get_role_by_id(Id) ->
-    %% Create sample role data
-    Data = #data{
-        first_name = <<"Adam">>,
-        last_name = <<"Everyman">>,
-        gender = <<"M">>,
-        mrn = Id,
-        organization = <<"GPXS87a6lEnkmzONMeR2qIVg">>
-    },
-    Role = #role{
-        event_type = <<"Arrival">>,
-        data = Data
-    },
-
-    %% Convert roles to JSON and return
-    json_utils:role_to_json(Role).
+%% Get role by mrn from Redis repository
+get_role_by_mrn(Mrn) ->
+    case role_repository:get_role_by_mrn(Mrn) of
+        {ok, Role} ->
+            %% Convert role to JSON and return
+            json_utils:role_to_json(Role);
+        {error, role_not_found} ->
+            %% Return not found error
+            {error, role_not_found};
+        {error, Reason} ->
+            %% Return error information
+            {error, Reason}
+    end.
 
 %% Post: creates a new role
 create_role(JsonTerm) ->
     %% Convert JSON to role record using json_utils
     RoleRec = json_utils:json_to_role(JsonTerm),
 
-    %% Store in ETS (Erlang Term Storage)
-    % ok = my_ets:insert(role_table, RoleRec),
-
-    %% Return confirmation JSON using helper function
-    json_utils:role_to_json(RoleRec).
+    %% Insert role into Redis repository
+    case role_repository:insert_role(RoleRec) of
+        {ok, InsertedRole} ->
+            %% Return the inserted role as JSON
+            json_utils:role_to_json(InsertedRole);
+        {error, Reason} ->
+            %% Return error information (you might want to handle this differently)
+            {error, Reason}
+    end.
 
 %% Put: updates an existing role
-update_role(Id, JsonTerm) ->
+update_role(Mrn, JsonTerm) ->
     %% Convert JSON to role record using json_utils
     RoleRec = json_utils:json_to_role(JsonTerm),
 
-    %% Update the record with the ID (for demonstration, we'll update the first_name with the ID)
+    %% Update the record with the Mrn (for demonstration, we'll update the first_name with the Mrn)
     UpdatedData = RoleRec#role.data#data{first_name = <<"Adam Updated">>},
     UpdatedRoleRec = RoleRec#role{data = UpdatedData},
 
@@ -99,10 +68,10 @@ update_role(Id, JsonTerm) ->
     %% Return confirmation JSON using helper function
     json_utils:role_to_json(UpdatedRoleRec).
 
-%% Delete: deletes a role by id
-delete_role(Id) ->
+%% Delete: deletes a role by mrn
+delete_role(Mrn) ->
     %% Simulate deletion from ETS
-    % ok = my_ets:delete(role_table, Id),
+    % ok = my_ets:delete(role_table, Mrn),
 
     %% Return confirmation
     ok.
