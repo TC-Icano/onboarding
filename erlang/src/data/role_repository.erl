@@ -197,6 +197,7 @@ delete_role(Mrn) when is_binary(Mrn) ->
         {error, Reason} ->
             {error, {connection_failed, Reason}}
     end;
+%% Handle invalid MRN parameter using pattern matching
 delete_role(_) ->
     {error, invalid_mrn}.
 

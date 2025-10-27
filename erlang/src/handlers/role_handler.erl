@@ -46,9 +46,17 @@ handle_get(Req0) ->
     %% Get all roles from service
     RolesJsonTerms = role_service:get_all_roles(),
 
-    %% Send response with all roles (get_all_roles always returns a list, even empty on error)
-    {ok, Req} = send_json_response(Req0, 200, <<"Roles retrieved successfully">>, RolesJsonTerms),
-    {ok, Req, state}.
+    %% Check if roles exist or not
+    case RolesJsonTerms of
+        [] ->
+            %% No roles found - return success with empty data
+            {ok, Req} = send_error_response(Req0, 404, <<"No roles found">>),
+            {ok, Req, state};
+        Roles when is_list(Roles) ->
+            %% Roles found - return success with data
+            {ok, Req} = send_json_response(Req0, 200, <<"Roles retrieved successfully">>, Roles),
+            {ok, Req, state}
+    end.
 
 %% Handle GET request with mrn parameter
 handle_get_by_mrn(Req0, Mrn) ->
