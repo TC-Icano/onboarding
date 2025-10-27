@@ -6,9 +6,6 @@
 
 -export([init/2]).
 
-%% Private helper functions
--export([send_json_response/3, send_json_response/4, send_error_response/3, send_error_response/4]).
-
 %% init/2 is called by cowboy for this simple handler
 init(Req0, _Opts) ->
     Method = cowboy_req:method(Req0),
@@ -16,9 +13,10 @@ init(Req0, _Opts) ->
         <<"GET">> ->
             %% Check for 'mrn' parameter
             case cowboy_req:binding(mrn, Req0) of
-                undefined -> handle_get(Req0);
-                Mrn -> handle_get_by_mrn(Req0, Mrn)
+                undefined -> handle_get(Req0); %% Get all roles if no mrn provided
+                Mrn -> handle_get_by_mrn(Req0, Mrn) %% Get role by mrn
             end;
+        
         <<"POST">> -> handle_post(Req0);
 
         <<"PUT">> ->
@@ -93,20 +91,35 @@ handle_put(Req0, Mrn) ->
     %% Decode JSON body
     JsonTerm = jsx:decode(Body, [{labels, atom}]),
 
-    %% Invoke update_role in role_service
-    RoleJsonTerm = role_service:update_role(Mrn, JsonTerm),
-    
-    {ok, Req} = send_json_response(Req1, 200, <<"Item updated successfully">>, RoleJsonTerm),
-    {ok, Req, state}.
+    %% Invoke update_role in role_service and handle result
+    case role_service:update_role(Mrn, JsonTerm) of
+        {error, role_not_found} ->
+            {ok, Req} = send_error_response(Req1, 404, <<"Role not found">>),
+            {ok, Req, state};
+        {error, Reason} ->
+            {ok, Req} = send_error_response(Req1, 500, <<"Failed to update role">>, Reason),
+            {ok, Req, state};
+        RoleJsonTerm ->
+            %% Success case - role was updated and returned as JSON
+            {ok, Req} = send_json_response(Req1, 200, <<"Item updated successfully">>, RoleJsonTerm),
+            {ok, Req, state}
+    end.
 
 %% Handle DELETE request with mrn parameter
 handle_delete(Req0, Mrn) ->
-    %% Invoke delete_role in role_service, it returns ok atom
-    ok = role_service:delete_role(Mrn),
-
-    %% Return confirmation JSON using helper function
-    {ok, Req} = send_json_response(Req0, 200, <<"Item deleted successfully">>),
-    {ok, Req, state}.
+    %% Invoke delete_role in role_service and handle result
+    case role_service:delete_role(Mrn) of
+        {ok, deleted} ->
+            %% Success case - role was deleted
+            {ok, Req} = send_json_response(Req0, 200, <<"Item deleted successfully">>),
+            {ok, Req, state};
+        {error, role_not_found} ->
+            {ok, Req} = send_error_response(Req0, 404, <<"Role not found">>),
+            {ok, Req, state};
+        {error, Reason} ->
+            {ok, Req} = send_error_response(Req0, 500, <<"Failed to delete role">>, Reason),
+            {ok, Req, state}
+    end.
 
 %% ============================================================================
 %% Helper Functions

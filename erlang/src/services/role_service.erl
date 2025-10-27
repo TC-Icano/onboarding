@@ -58,20 +58,30 @@ update_role(Mrn, JsonTerm) ->
     %% Convert JSON to role record using json_utils
     RoleRec = json_utils:json_to_role(JsonTerm),
 
-    %% Update the record with the Mrn (for demonstration, we'll update the first_name with the Mrn)
-    UpdatedData = RoleRec#role.data#data{first_name = <<"Adam Updated">>},
-    UpdatedRoleRec = RoleRec#role{data = UpdatedData},
-
-    %% Store in ETS (Erlang Term Storage)
-    % ok = my_ets:insert(role_table, UpdatedRoleRec),
-
-    %% Return confirmation JSON using helper function
-    json_utils:role_to_json(UpdatedRoleRec).
+    %% Update role in Redis repository
+    case role_repository:update_role(Mrn, RoleRec) of
+        {ok, UpdatedRole} ->
+            %% Return the updated role as JSON
+            json_utils:role_to_json(UpdatedRole);
+        {error, role_not_found} ->
+            %% Return not found error
+            {error, role_not_found};
+        {error, Reason} ->
+            %% Return error information
+            {error, Reason}
+    end.
 
 %% Delete: deletes a role by mrn
 delete_role(Mrn) ->
-    %% Simulate deletion from ETS
-    % ok = my_ets:delete(role_table, Mrn),
-
-    %% Return confirmation
-    ok.
+    %% Delete role from Redis repository
+    case role_repository:delete_role(Mrn) of
+        {ok, deleted} ->
+            %% Return success confirmation
+            {ok, deleted};
+        {error, role_not_found} ->
+            %% Return not found error
+            {error, role_not_found};
+        {error, Reason} ->
+            %% Return error information
+            {error, Reason}
+    end.

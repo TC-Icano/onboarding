@@ -12,7 +12,6 @@
     {env, []},
     {modules, [
         staff_roles_app,
-        hello_handler,
         role_handler
     ]},
     {licenses, ["Apache-2.0"]},

@@ -8,10 +8,8 @@ start(_StartType, _StartArgs) ->
     io:format("Starting Cowboy API...~n"),
     Dispatch = cowboy_router:compile([
         {'_', [
-            {"/hello", hello_handler, []},
-            {"/hola", hello_handler, []},
             {"/roles", role_handler, []},
-            {"/roles/:mrn", role_handler, []}
+            {"/roles/:mrn", role_handler, []} %% Define route with mrn parameter
         ]}
     ]),
     {ok, _} = cowboy:start_clear(http_listener, [{port, 8080}], #{env => #{dispatch => Dispatch}}),
