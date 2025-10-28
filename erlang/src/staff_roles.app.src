@@ -12,6 +12,7 @@
     {env, []},
     {modules, [
         staff_roles_app,
+        redis_connection,
         role_handler
     ]},
     {licenses, ["Apache-2.0"]},

@@ -28,10 +28,19 @@ start_link() ->
 init([]) ->
     SupFlags = #{
         strategy => one_for_all,
-        intensity => 0,
-        period => 1
+        intensity => 5,  %% Allow 5 restarts
+        period => 10     %% Within 10 seconds
     },
-    ChildSpecs = [],
+    ChildSpecs = [
+        #{
+            id => redis_connection,
+            start => {redis_connection, start_link, []},
+            restart => permanent,
+            shutdown => 5000,
+            type => worker,
+            modules => [redis_connection]
+        }
+    ],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions
