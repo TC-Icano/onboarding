@@ -6,6 +6,7 @@ namespace DependencyInversion
     public class StudentRepository : IStudentRepository
     {
         private static ObservableCollection<Student> collection;
+        private readonly ILogbook _logbook;
 
         public StudentRepository(
             ILogbook logbook
@@ -46,7 +47,7 @@ namespace DependencyInversion
             }
         }
 
-        private void InitData()
+        private static void InitData()
         {
             if (collection == null)
             {
@@ -57,6 +58,5 @@ namespace DependencyInversion
             }
         }
 
-        private readonly ILogbook _logbook;
     }
 }

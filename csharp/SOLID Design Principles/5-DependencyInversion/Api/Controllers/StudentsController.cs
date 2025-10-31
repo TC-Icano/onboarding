@@ -7,6 +7,9 @@ namespace DependencyInversion.Controllers;
 [Route("api/[controller]")]
 public class StudentsController : ControllerBase
 {
+
+    private readonly IStudentService _studentService;
+
     public StudentsController(
         IStudentService studentService
     )
@@ -63,6 +66,4 @@ public class StudentsController : ControllerBase
             return Problem();
         } 
     }
-
-    private readonly IStudentService _studentService;
 }

@@ -11,6 +11,10 @@ namespace Api.Service
     /// cref="IStudentRepository"/> for data access and an <see cref="ILogbook"/> for logging.</remarks>
     public class StudentService : IStudentService
     {
+
+        private readonly IStudentRepository _studentRepository;
+        private readonly ILogbook _logbook;
+
         public StudentService(
             IStudentRepository studentRepository,
 
@@ -59,8 +63,5 @@ namespace Api.Service
                 throw;
             }
         }
-
-        private readonly IStudentRepository _studentRepository;
-        private readonly ILogbook _logbook;
     }
 }
