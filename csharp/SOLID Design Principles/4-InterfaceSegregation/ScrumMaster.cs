@@ -13,7 +13,7 @@ namespace InterfaceSegregation
              Console.WriteLine("I'm planning user stories");
         }
 
-        public void Comunicate()
+        public void Communicate()
         {
             Console.WriteLine("I'm talking to the team user");
         }

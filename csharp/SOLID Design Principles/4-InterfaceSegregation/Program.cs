@@ -8,7 +8,7 @@ new Tester().Develop();
 
 //Invoke the functionality of the ScrumMaster class
 new ScrumMaster().Plan();
-new ScrumMaster().Comunicate();
+new ScrumMaster().Communicate();
 new ScrumMaster().Design();
 new ScrumMaster().Develop();
 new ScrumMaster().Test();

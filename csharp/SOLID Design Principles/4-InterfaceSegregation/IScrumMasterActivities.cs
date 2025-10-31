@@ -17,7 +17,7 @@ namespace _4_InterfaceSegregation
         /// <summary>
         /// Initiates communication between the system and an external entity.
         /// </summary>
-        void Comunicate();
+        void Communicate();
 
         /// <summary>
         /// Initiates the design process for the current object or system.
