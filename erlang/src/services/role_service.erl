@@ -18,7 +18,7 @@ get_all_roles() ->
         {ok, Roles} ->
             %% Convert roles to JSON and return
             [json_utils:role_to_json(Role) || Role <- Roles];
-        {error, Reason} ->
+        _ ->
             %% Return empty list or handle error as needed
             %% You might want to log this error
             []

@@ -69,22 +69,18 @@ init([]) ->
     {ok, #state{}}.
 
 %% @doc Handle synchronous calls
-handle_call(get_connection, _From, #state{connection = Connection} = State) ->
-    case Connection of
-        undefined ->
-            {reply, {error, no_connection}, State};
-        Conn ->
-            {reply, {ok, Conn}, State}
-    end;
+handle_call(get_connection, _From, #state{connection = undefined} = State) ->
+    {reply, {error, no_connection}, State};
 
-handle_call({execute, Command}, _From, #state{connection = Connection} = State) ->
-    case Connection of
-        undefined ->
-            {reply, {error, no_connection}, State};
-        Conn ->
-            Result = eredis:q(Conn, Command),
-            {reply, Result, State}
-    end;
+handle_call(get_connection, _From, #state{connection = Conn} = State) ->
+    {reply, {ok, Conn}, State};
+
+handle_call({execute, Command}, _From, #state{connection = undefined} = State) ->
+    {reply, {error, no_connection}, State};
+
+handle_call({execute, Command}, _From, #state{connection = Conn} = State) ->
+    Result = eredis:q(Conn, Command),
+    {reply, Result, State};
 
 handle_call(_Request, _From, State) ->
     {reply, {error, unknown_request}, State}.
