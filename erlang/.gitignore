@@ -1,10 +1,14 @@
 *.iml
 *.orig
 *.crashdump
+erl_crash.dump
 *.tool-versions
 .idea
 *.so
 *.beam
+*.dump
+*.plt
+*.app
 modules/ebin
 /xmpp_builder/
 *.DS_Store
@@ -22,3 +26,31 @@ node_modules
 dump.rdb
 erlang_ls.config
 .vscode
+
+# Rebar3 specific
+.rebar3/
+rebar3.crashdump
+
+# Logs and temporary files
+*.log
+logs/
+log/
+ebin/
+priv/log/
+
+# Test artifacts
+.eunit/
+.ct_run.*/
+.common_test/
+cover/
+test/*.beam
+
+# Release artifacts
+rel/
+_rel/
+*.tar.gz
+
+# Environment and OS specific
+.env
+.envrc
+Thumbs.db

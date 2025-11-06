@@ -1,0 +1,36 @@
+services:
+  # Redis service
+  redis:
+    image: redis:7-alpine
+    container_name: staff_roles_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Erlang application service
+  staff_roles:
+    build: 
+      context: .
+      tags:
+        - "erlang/staff-roles:1.0.6"
+    image: erlang/staff-roles:1.0.6
+    container_name: staff_roles_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+volumes:
+  redis_data:
+    driver: local

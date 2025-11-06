@@ -351,3 +351,4 @@ MigrationBackup/
 
 # VSCode working folder
 .vscode/*
+erl_crash.dump
