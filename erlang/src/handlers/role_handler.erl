@@ -1,155 +1,154 @@
 -module(role_handler).
--behaviour(cowboy_handler).
+-behaviour(cowboy_rest).
 
 %% Include record definitions
 -include("../../include/records.hrl").
 
--export([init/2]).
+%% cowboy_rest callbacks
+-export([
+    init/2,
+    allowed_methods/2,
+    content_types_provided/2,
+    content_types_accepted/2,
+    delete_resource/2,
+    post_is_create/2,
+    create_path/2,
+    from_json/2,
+    to_json/2
+]).
 
-%% init/2 is called by cowboy for this simple handler
-init(Req0, _Opts) ->
-    Method = cowboy_req:method(Req0),
-    case Method of
-        <<"GET">> ->
-            %% Check for 'mrn' parameter
-            case cowboy_req:binding(mrn, Req0) of
-                undefined -> handle_get(Req0); %% Get all roles if no mrn provided
-                Mrn -> handle_get_by_mrn(Req0, Mrn) %% Get role by mrn
+%% Initialize the REST handler
+init(Req, Opts) ->
+    {cowboy_rest, Req, Opts}.
+
+%% Define which HTTP methods are allowed
+allowed_methods(Req, State) ->
+    {[<<"GET">>, <<"POST">>, <<"PUT">>, <<"DELETE">>], Req, State}.
+
+%% Define content types this resource can provide (for GET requests)
+content_types_provided(Req, State) ->
+    {[{<<"application/json">>, to_json}], Req, State}.
+
+%% Define content types this resource can accept (for POST/PUT requests)
+content_types_accepted(Req, State) ->
+    {[{<<"application/json">>, from_json}], Req, State}.
+
+%% Indicate that POST requests create new resources
+post_is_create(Req, State) ->
+    {true, Req, State}.
+
+%% Create path for POST requests (we'll return the created resource location)
+create_path(Req, State) ->
+    {<<"/roles">>, Req, State}.
+
+
+
+%% Handle GET requests - provide JSON representation
+to_json(Req, State) ->
+    case cowboy_req:binding(mrn, Req) of
+        undefined ->
+            %% Get all roles
+            RolesJsonTerms = role_service:get_all_roles(),
+            case RolesJsonTerms of
+                [] ->
+                    Response = json_utils:format_error_response(404, <<"No roles found">>),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:set_resp_body(JsonBinary, Req),
+                    {JsonBinary, Req2, State};
+                Roles when is_list(Roles) ->
+                    Response = json_utils:format_success_response(<<"Roles retrieved successfully">>, Roles),
+                    JsonBinary = jsx:encode(Response),
+                    {JsonBinary, Req, State}
             end;
-        
-        <<"POST">> -> handle_post(Req0);
-
-        <<"PUT">> ->
-            case cowboy_req:binding(mrn, Req0) of
-                undefined ->
-                    {ok, Req} = send_error_response(Req0, 400, <<"Bad Request: 'mrn' parameter required">>),
-                    {ok, Req, state};
-                Mrn -> handle_put(Req0, Mrn)
-            end;
-
-        <<"DELETE">> ->
-            case cowboy_req:binding(mrn, Req0) of
-                undefined ->
-                    {ok, Req} = send_error_response(Req0, 400, <<"Bad Request: 'mrn' parameter required">>),
-                    {ok, Req, state};
-                Mrn -> handle_delete(Req0, Mrn)
-            end;
-
-        %% return 400 code if other methods
-        _Other ->
-            {ok, Req} = send_error_response(Req0, 400, <<"Bad Request">>),
-            {ok, Req, state}
+        Mrn ->
+            %% Get role by MRN
+            case role_service:get_role_by_mrn(Mrn) of
+                {error, role_not_found} ->
+                    Response = json_utils:format_error_response(404, <<"Role not found">>),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:reply(404, #{<<"content-type">> => <<"application/json">>}, JsonBinary, Req),
+                    {halt, Req2, State};
+                {error, _} ->
+                    Response = json_utils:format_error_response(500, <<"Internal server error">>),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:reply(500, #{<<"content-type">> => <<"application/json">>}, JsonBinary, Req),
+                    {halt, Req2, State};
+                RoleJsonTerm ->
+                    Response = json_utils:format_success_response(<<"Role retrieved successfully">>, RoleJsonTerm),
+                    JsonBinary = jsx:encode(Response),
+                    {JsonBinary, Req, State}
+            end
     end.
 
-%% Handle GET request
-handle_get(Req0) ->
-    %% Get all roles from service
-    RolesJsonTerms = role_service:get_all_roles(),
-
-    %% Check if roles exist or not
-    case RolesJsonTerms of
-        [] ->
-            %% No roles found - return success with empty data
-            {ok, Req} = send_error_response(Req0, 404, <<"No roles found">>),
-            {ok, Req, state};
-        Roles when is_list(Roles) ->
-            %% Roles found - return success with data
-            {ok, Req} = send_json_response(Req0, 200, <<"Roles retrieved successfully">>, Roles),
-            {ok, Req, state}
-    end.
-
-%% Handle GET request with mrn parameter
-handle_get_by_mrn(Req0, Mrn) ->
-    %% Get role by mrn from service
-    case role_service:get_role_by_mrn(Mrn) of
-        {error, role_not_found} ->
-            {ok, Req} = send_error_response(Req0, 404, <<"Role not found">>),
-            {ok, Req, state};
-        {error, Reason} ->
-            {ok, Req} = send_error_response(Req0, 500, <<"Internal server error">>, Reason),
-            {ok, Req, state};
-        RoleJsonTerm ->
-            {ok, Req} = send_json_response(Req0, 200, <<"Role retrieved successfully">>, RoleJsonTerm),
-            {ok, Req, state}
-    end.
-
-%% POST: receives JSON body, builds records, replies
-handle_post(Req0) ->
-    {ok, Body, Req1} = cowboy_req:read_body(Req0),
-
-    %% Decode JSON body
+%% Handle JSON input for both POST and PUT requests
+%% cowboy_rest will call this for both POST and PUT based on the flow
+from_json(Req, State) ->
+    {ok, Body, Req1} = cowboy_req:read_body(Req),
     JsonTerm = jsx:decode(Body, [{labels, atom}]),
-
-    %% Invoke create_role in role_service and handle result
-    case role_service:create_role(JsonTerm) of
-        {error, Reason} ->
-            %% Handle error case
-            {ok, Req} = send_error_response(Req1, 500, <<"Failed to create role">>, Reason),
-            {ok, Req, state};
-        RoleJsonTerm ->
-            %% Success case - role was created and returned as JSON
-            {ok, Req} = send_json_response(Req1, 201, <<"Item created successfully">>, RoleJsonTerm),
-            {ok, Req, state}
+    
+    %% Check if this is a PUT request by looking for MRN binding
+    case cowboy_req:binding(mrn, Req1) of
+        undefined ->
+            %% No MRN means this should be a POST (create) operation
+            case role_service:create_role(JsonTerm) of
+                {error, Reason} ->
+                    Response = json_utils:format_error_response(500, <<"Failed to create role">>, Reason),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:reply(500, #{<<"content-type">> => <<"application/json">>}, JsonBinary, Req1),
+                    {halt, Req2, State};
+                RoleJsonTerm ->
+                    Response = json_utils:format_success_response(<<"Item created successfully">>, RoleJsonTerm),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:set_resp_body(JsonBinary, Req1),
+                    {true, Req2, State}
+            end;
+        Mrn ->
+            %% MRN present means this is a PUT (update) operation
+            case role_service:update_role(Mrn, JsonTerm) of
+                {error, role_not_found} ->
+                    Response = json_utils:format_error_response(404, <<"Role not found">>),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:reply(404, #{<<"content-type">> => <<"application/json">>}, JsonBinary, Req1),
+                    {halt, Req2, State};
+                {error, Reason} ->
+                    Response = json_utils:format_error_response(500, <<"Failed to update role">>, Reason),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:reply(500, #{<<"content-type">> => <<"application/json">>}, JsonBinary, Req1),
+                    {halt, Req2, State};
+                RoleJsonTerm ->
+                    Response = json_utils:format_success_response(<<"Item updated successfully">>, RoleJsonTerm),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:set_resp_body(JsonBinary, Req1),
+                    {true, Req2, State}
+            end
     end.
 
-%% PUT: receives JSON body, builds records, replies
-handle_put(Req0, Mrn) ->
-    {ok, Body, Req1} = cowboy_req:read_body(Req0),
-
-    %% Decode JSON body
-    JsonTerm = jsx:decode(Body, [{labels, atom}]),
-
-    %% Invoke update_role in role_service and handle result
-    case role_service:update_role(Mrn, JsonTerm) of
-        {error, role_not_found} ->
-            {ok, Req} = send_error_response(Req1, 404, <<"Role not found">>),
-            {ok, Req, state};
-        {error, Reason} ->
-            {ok, Req} = send_error_response(Req1, 500, <<"Failed to update role">>, Reason),
-            {ok, Req, state};
-        RoleJsonTerm ->
-            %% Success case - role was updated and returned as JSON
-            {ok, Req} = send_json_response(Req1, 200, <<"Item updated successfully">>, RoleJsonTerm),
-            {ok, Req, state}
+%% Handle DELETE requests
+delete_resource(Req, State) ->
+    case cowboy_req:binding(mrn, Req) of
+        undefined ->
+            Response = json_utils:format_error_response(400, <<"Bad Request: 'mrn' parameter required">>),
+            JsonBinary = jsx:encode(Response),
+            Req2 = cowboy_req:reply(400, #{<<"content-type">> => <<"application/json">>}, JsonBinary, Req),
+            {halt, Req2, State};
+        Mrn ->
+            case role_service:delete_role(Mrn) of
+                {ok, deleted} ->
+                    Response = json_utils:format_success_response(<<"Item deleted successfully">>, null),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:set_resp_body(JsonBinary, Req),
+                    {true, Req2, State};
+                {error, role_not_found} ->
+                    Response = json_utils:format_error_response(404, <<"Role not found">>),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:reply(404, #{<<"content-type">> => <<"application/json">>}, JsonBinary, Req),
+                    {halt, Req2, State};
+                {error, Reason} ->
+                    Response = json_utils:format_error_response(500, <<"Failed to delete role">>, Reason),
+                    JsonBinary = jsx:encode(Response),
+                    Req2 = cowboy_req:reply(500, #{<<"content-type">> => <<"application/json">>}, JsonBinary, Req),
+                    {halt, Req2, State}
+            end
     end.
 
-%% Handle DELETE request with mrn parameter
-handle_delete(Req0, Mrn) ->
-    %% Invoke delete_role in role_service and handle result
-    case role_service:delete_role(Mrn) of
-        {ok, deleted} ->
-            %% Success case - role was deleted
-            {ok, Req} = send_json_response(Req0, 200, <<"Item deleted successfully">>),
-            {ok, Req, state};
-        {error, role_not_found} ->
-            {ok, Req} = send_error_response(Req0, 404, <<"Role not found">>),
-            {ok, Req, state};
-        {error, Reason} ->
-            {ok, Req} = send_error_response(Req0, 500, <<"Failed to delete role">>, Reason),
-            {ok, Req, state}
-    end.
 
-%% ============================================================================
-%% Helper Functions
-%% ============================================================================
-
-%% Send a standardized JSON response with data
-send_json_response(Req, StatusCode, Message, Data) ->
-    ReplyTerm = json_utils:format_success_response(Message, Data),
-    JsonBinary = jsx:encode(ReplyTerm),
-    Headers = #{<<"content-type">> => <<"application/json">>},
-    {ok, cowboy_req:reply(StatusCode, Headers, JsonBinary, Req)}.
-
-%% Send a standardized JSON response with just a message (no data)
-send_json_response(Req, StatusCode, Message) ->
-    send_json_response(Req, StatusCode, Message, null).
-
-%% Send a standardized error response
-send_error_response(Req, StatusCode, Message) ->
-    send_error_response(Req, StatusCode, Message, undefined).
-
-send_error_response(Req, StatusCode, Message, Details) ->
-    ReplyTerm = json_utils:format_error_response(StatusCode, Message, Details),
-    JsonBinary = jsx:encode(ReplyTerm),
-    Headers = #{<<"content-type">> => <<"application/json">>},
-    {ok, cowboy_req:reply(StatusCode, Headers, JsonBinary, Req)}.
